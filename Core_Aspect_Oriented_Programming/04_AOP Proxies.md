@@ -1,0 +1,3 @@
+<p>Spring AOP는 기본적으로 AOP 프록시에 대해 표준 JDK 동적 프록시를 사용합니다. 이를 통해 모든 인터페이스(또는 인터페이스 집합)를 프록시할 수 있습니다.</p>
+<p>Spring AOP는 CGLIB 프록시를 사용할 수도 있습니다. 이는 인터페이스가 아닌 클래스를 프록시하는 데 필요합니다. 기본적으로 비즈니스 객체가 인터페이스를 구현하지 않는 경우 CGLIB가 사용됩니다. 클래스보다는 인터페이스에 프로그래밍하는 것이 좋으므로 비즈니스 클래스는 일반적으로 하나 이상의 비즈니스 인터페이스를 구현합니다. 인터페이스에 선언되지 않은 메소드를 조언해야 하거나 프록시된 객체를 구체적인(concrete) 타입으로 메소드에 전달해야 하는 경우(희귀하게도) <a href="https://docs.spring.io/spring-framework/reference/core/aop/proxying.html">CGLIB를 강제로 사용하는 것</a>이 가능합니다.</p>
+<p>Spring AOP가 프록시 기반이라는 사실을 이해하는 것이 중요합니다. 이 구현 세부 사항이 실제로 무엇을 의미하는지 자세히 알아보려면 <a href="https://docs.spring.io/spring-framework/reference/core/aop/proxying.html#aop-understanding-aop-proxies">AOP 프록시 이해</a>를 참조하세요.</p>
