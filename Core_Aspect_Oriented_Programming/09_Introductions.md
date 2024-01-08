@@ -1,0 +1,16 @@
+<p>소개(AspectJ에서는 유형 간 선언으로 알려짐)를 통해 aspect은 어드바이스된 객체가 주어진 인터페이스를 구현한다고 선언하고 해당 객체를 대신하여 해당 인터페이스의 구현을 제공할 수 있습니다.</p>
+<p><code>@DeclareParents</code> annotation을 사용하여 소개를 할 수 있습니다. 이 annotation은 일치하는 type에 새로운 상위(따라서 이름)가 있음을 선언하는 데 사용됩니다. 예를 들어, <code>UsageTracked</code>라는 인터페이스와 <code>DefaultUsageTracked</code>라는 인터페이스의 구현이 주어지면 다음 aspect은 서비스 인터페이스의 모든 구현자가 <code>UsageTracked</code> 인터페이스도 구현함을 선언합니다(예: JMX를 통한 통계의 경우).</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Aspect</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UsageTracking</span> <span class="token punctuation">{</span>
+
+	<span class="token annotation punctuation">@DeclareParents</span><span class="token punctuation">(</span>value<span class="token operator">=</span><span class="token string">"com.xyz.service.*+"</span><span class="token punctuation">,</span> defaultImpl<span class="token operator">=</span><span class="token class-name">DefaultUsageTracked</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+	<span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token class-name">UsageTracked</span> mixin<span class="token punctuation">;</span>
+
+	<span class="token annotation punctuation">@Before</span><span class="token punctuation">(</span><span class="token string">"execution(* com.xyz..service.*.*(..)) &amp;&amp; this(usageTracked)"</span><span class="token punctuation">)</span>
+	<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">recordUsage</span><span class="token punctuation">(</span><span class="token class-name">UsageTracked</span> usageTracked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		usageTracked<span class="token punctuation">.</span><span class="token function">incrementUseCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span></code></pre>
+<p>구현될 인터페이스는 annotation이 달린 필드의 type에 따라 결정됩니다. <code>@DeclareParents</code> annotation의 <code>value</code> 속성은 AspectJ type 패턴입니다. 일치하는 type의 모든 Bean은 <code>UsageTracked</code> 인터페이스를 구현합니다. 이전 예제의 before advice에서 서비스 Bean은 <code>UsageTracked</code> 인터페이스의 구현으로 직접 사용될 수 있습니다. 프로그래밍 방식으로 Bean에 액세스하는 경우 다음을 작성합니다.</p>
+<pre><code class="language-java"><span class="token class-name">UsageTracked</span> usageTracked <span class="token operator">=</span> context<span class="token punctuation">.</span><span class="token function">getBean</span><span class="token punctuation">(</span><span class="token string">"myService"</span><span class="token punctuation">,</span> <span class="token class-name">UsageTracked</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
