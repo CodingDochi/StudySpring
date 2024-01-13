@@ -1,0 +1,1 @@
+<p>자동 프록시 지원, 스키마 정의 <code>&lt;aop:aspect&gt;</code> aspect, <code>&lt;aop:advisor&gt;</code> 선언된 advisor, 심지어 동일한 구성에서 다른 스타일의 프록시 및 인터셉터를 사용하여 @AspectJ 스타일 aspect을 혼합하는 것이 완벽하게 가능합니다. 이들 모두는 동일한 기본 지원 메커니즘을 사용하여 구현되며 아무런 어려움 없이 공존할 수 있습니다.</p>
