@@ -1,0 +1,159 @@
+<p>이전 섹션에서 설명한 것처럼 <code>core.convert</code>는 범용 유형 변환 시스템입니다. 이는 한 유형에서 다른 유형으로의 변환 논리를 구현하기 위해 통합된 <code>ConversionService</code> API와 강력한 유형의 <code>Converter</code> SPI를 제공합니다. Spring 컨테이너는 이 시스템을 사용하여 Bean 속성 값을 바인딩합니다. 또한 SpEL(Spring Expression Language)과 <code>DataBinder</code> 모두 이 시스템을 사용하여 필드 값을 바인딩합니다. 예를 들어 SpEL이 <code>expression.setValue(Object bean, Object value)</code> 시도를 완료하기 위해 <code>Short</code>를 <code>Long</code>으로 강제해야(coerce) 하는 경우 <code>core.convert</code> 시스템이 강제(coercion)를 수행합니다.</p>
+<p>이제 웹 또는 데스크톱 애플리케이션과 같은 일반적인 클라이언트 환경의 타입 변환 요구 사항을 고려하십시오. 이러한 환경에서는 일반적으로 클라이언트 포스트백 프로세스를 지원하기 위해 <code>String</code>에서 변환하고, 뷰 렌더링 프로세스를 지원하기 위해 <code>String</code>로 다시 변환합니다. 또한 <code>String</code> 값을 지역화(localize)해야 하는 경우도 많습니다. 보다 일반적인 <code>core.convert</code> <code>Converter</code> SPI는 이러한 형식 요구 사항을 직접적으로 해결하지 않습니다. 이를 직접적으로 해결하기 위해 Spring은 클라이언트 환경을 위한 <code>PropertyEditor</code> 구현에 대한 간단하고 강력한 대안을 제공하는 편리한 <code>Formatter</code> SPI를 제공합니다.</p>
+<p>일반적으로 범용 타입 변환 논리(예: <code>java.util.Date</code>와 <code>Long</code> 간 변환)를 구현해야 할 때 <code>Converter</code> SPI를 사용할 수 있습니다. 클라이언트 환경(예: 웹 애플리케이션)에서 작업하고 현지화된 필드 값을 구문 분석하고 인쇄해야 할 때 <code>Formatter</code> SPI를 사용할 수 있습니다. <code>ConversionService</code>는 두 SPI 모두에 대한 통합 타입 변환 API를 제공합니다.</p>
+<h1 id="the-formatter-spi">The <code>Formatter</code> SPI</h1>
+<p>필드 형식 지정 논리를 구현하는 <code>Formatter</code> SPI는 간단하고 강력한 형식입니다. 다음 목록은 <code>Formatter</code> 인터페이스 정의를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>format</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">Formatter</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">T</span><span class="token punctuation">&gt;</span></span> <span class="token keyword">extends</span> <span class="token class-name">Printer</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">T</span><span class="token punctuation">&gt;</span></span><span class="token punctuation">,</span> <span class="token class-name">Parser</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">T</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre>
+<p><code>Formatter</code>는 <code>Printer</code> 및 <code>Parser</code> 빌딩 블록 인터페이스에서 확장됩니다. 다음 목록은 이러한 두 인터페이스의 정의를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">Printer</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">T</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+
+	<span class="token class-name">String</span> <span class="token function">print</span><span class="token punctuation">(</span><span class="token class-name">T</span> fieldValue<span class="token punctuation">,</span> <span class="token class-name">Locale</span> locale<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<pre><code class="language-java"><span class="token keyword">import</span> <span class="token namespace">java<span class="token punctuation">.</span>text</span><span class="token punctuation">.</span><span class="token class-name">ParseException</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">Parser</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">T</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+
+	<span class="token class-name">T</span> <span class="token function">parse</span><span class="token punctuation">(</span><span class="token class-name">String</span> clientValue<span class="token punctuation">,</span> <span class="token class-name">Locale</span> locale<span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">ParseException</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>자신만의 <code>Formatter</code>를 만들려면 앞서 표시된 <code>Formatter</code> 인터페이스를 구현하세요. <code>T</code>를 형식화하려는 객체 타입으로 매개변수화합니다(예: <code>java.util.Date</code>). 클라이언트 로캘(locale)에 표시하기 위해 <code>T</code> 인스턴스를 인쇄하는 <code>print()</code> 작업을 구현합니다. 클라이언트 로케일에서 반환된 형식화된 표현에서 <code>T</code> 인스턴스를 구문 분석하는 구문 <code>parse()</code> 작업을 구현합니다. 구문 분석 시도가 실패하면 <code>Formatter</code>는 <code>ParseException</code> 또는 <code>IllegalArgumentException</code>을 발생시켜야 합니다. <code>Formatter</code> 구현이 스레드로부터 안전(thread-safe)한지 확인하십시오.</p>
+<p><code>format</code> 하위 패키지는 편의를 위해 여러 <code>Formatter</code> 구현을 제공합니다. <code>number</code> 패키지는 <code>java.text.NumberFormat</code>을 사용하는 <code>Number</code> 객체의 형식을 지정하기 위해 <code>NumberStyleFormatter</code>, <code>CurrencyStyleFormatter</code> 및 <code>PercentStyleFormatter</code>를 제공합니다. <code>datetime</code> 패키지는 <code>java.text.DateFormat</code>으로 <code>java.util.Date</code> 객체의 형식을 지정하는 <code>DateFormatter</code>를 제공합니다.</p>
+<p>다음 <code>DateFormatter</code>는 <code>Formatter</code> 구현의 예입니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>format<span class="token punctuation">.</span>datetime</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">class</span> <span class="token class-name">DateFormatter</span> <span class="token keyword">implements</span> <span class="token class-name">Formatter</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Date</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+
+	<span class="token keyword">private</span> <span class="token class-name">String</span> pattern<span class="token punctuation">;</span>
+
+	<span class="token keyword">public</span> <span class="token class-name">DateFormatter</span><span class="token punctuation">(</span><span class="token class-name">String</span> pattern<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">public</span> <span class="token class-name">String</span> <span class="token function">print</span><span class="token punctuation">(</span><span class="token class-name">Date</span> date<span class="token punctuation">,</span> <span class="token class-name">Locale</span> locale<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> <span class="token punctuation">(</span>date <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">return</span> <span class="token string">""</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+		<span class="token keyword">return</span> <span class="token function">getDateFormat</span><span class="token punctuation">(</span>locale<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span>date<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">public</span> <span class="token class-name">Date</span> <span class="token function">parse</span><span class="token punctuation">(</span><span class="token class-name">String</span> formatted<span class="token punctuation">,</span> <span class="token class-name">Locale</span> locale<span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">ParseException</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> <span class="token punctuation">(</span>formatted<span class="token punctuation">.</span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">return</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+		<span class="token keyword">return</span> <span class="token function">getDateFormat</span><span class="token punctuation">(</span>locale<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>formatted<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">protected</span> <span class="token class-name">DateFormat</span> <span class="token function">getDateFormat</span><span class="token punctuation">(</span><span class="token class-name">Locale</span> locale<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token class-name">DateFormat</span> dateFormat <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SimpleDateFormat</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>pattern<span class="token punctuation">,</span> locale<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		dateFormat<span class="token punctuation">.</span><span class="token function">setLenient</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">return</span> dateFormat<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Spring 팀은 커뮤니티 중심의 <code>Formatter</code> 기여를 환영합니다. 기여하려면 <a href="https://github.com/spring-projects/spring-framework/issues">GitHub 문제</a>를 참조하세요.</p>
+<h1 id="annotation-driven-formatting">Annotation-driven Formatting</h1>
+<p>필드 형식은 필드 타입이나 어노테이션으로 구성할 수 있습니다. 어노테이션을 <code>Formatter</code>에 바인딩하려면 <code>AnnotationFormatterFactory</code>를 구현하세요. 다음 목록은 <code>AnnotationFormatterFactory</code> 인터페이스의 정의를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>format</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">AnnotationFormatterFactory</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">A</span> <span class="token keyword">extends</span> <span class="token class-name">Annotation</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+
+	<span class="token class-name">Set</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Class</span><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span><span class="token punctuation">&gt;</span></span> <span class="token function">getFieldTypes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token class-name">Printer</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> <span class="token function">getPrinter</span><span class="token punctuation">(</span><span class="token class-name">A</span> annotation<span class="token punctuation">,</span> <span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token class-name">Parser</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> <span class="token function">getParser</span><span class="token punctuation">(</span><span class="token class-name">A</span> annotation<span class="token punctuation">,</span> <span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>구현을 생성하려면 다음을 수행하십시오.</p>
+<ol>
+<li>
+<p><code>A</code>를 형식 지정 논리와 연결하려는 필드 <code>annotationType</code>이 되도록 매개변수화합니다(예: <code>org.springframework.format.annotation.DateTimeFormat</code>).</p>
+</li>
+<li>
+<p><code>getFieldTypes()</code>가 어노테이션을 사용할 수 있는 필드 타입을 반환하도록 합니다.</p>
+</li>
+<li>
+<p><code>getPrinter()</code>가 <code>Printer</code>를 반환하여어노테이션이 달린 필드의 값을 인쇄하도록 합니다.</p>
+</li>
+<li>
+<p><code>getParser()</code>가 <code>Parser</code>를 반환하여 어노테이션이 달린 필드에 대한 <code>clientValue</code>를 구문 분석하도록 합니다.</p>
+</li>
+</ol>
+<p>다음 예제 <code>AnnotationFormatterFactory</code> 구현은 <code>@NumberFormat</code> 어노테이션을 포맷터에 바인딩하여 숫자 스타일이나 패턴을 지정할 수 있도록 합니다.</p>
+<pre><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">class</span> <span class="token class-name">NumberFormatAnnotationFormatterFactory</span>
+		<span class="token keyword">implements</span> <span class="token class-name">AnnotationFormatterFactory</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">NumberFormat</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+
+	<span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token class-name">Set</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Class</span><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span><span class="token punctuation">&gt;</span></span> FIELD_TYPES <span class="token operator">=</span> <span class="token class-name">Set</span><span class="token punctuation">.</span><span class="token function">of</span><span class="token punctuation">(</span><span class="token class-name">Short</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span>
+			<span class="token class-name">Integer</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> <span class="token class-name">Long</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> <span class="token class-name">Float</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> <span class="token class-name">Double</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span>
+			<span class="token class-name">BigDecimal</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> <span class="token class-name">BigInteger</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">public</span> <span class="token class-name">Set</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Class</span><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span><span class="token punctuation">&gt;</span></span> <span class="token function">getFieldTypes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> FIELD_TYPES<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">public</span> <span class="token class-name">Printer</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Number</span><span class="token punctuation">&gt;</span></span> <span class="token function">getPrinter</span><span class="token punctuation">(</span><span class="token class-name">NumberFormat</span> annotation<span class="token punctuation">,</span> <span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token function">configureFormatterFrom</span><span class="token punctuation">(</span>annotation<span class="token punctuation">,</span> fieldType<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">public</span> <span class="token class-name">Parser</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Number</span><span class="token punctuation">&gt;</span></span> <span class="token function">getParser</span><span class="token punctuation">(</span><span class="token class-name">NumberFormat</span> annotation<span class="token punctuation">,</span> <span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token function">configureFormatterFrom</span><span class="token punctuation">(</span>annotation<span class="token punctuation">,</span> fieldType<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">private</span> <span class="token class-name">Formatter</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Number</span><span class="token punctuation">&gt;</span></span> <span class="token function">configureFormatterFrom</span><span class="token punctuation">(</span><span class="token class-name">NumberFormat</span> annotation<span class="token punctuation">,</span> <span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>annotation<span class="token punctuation">.</span><span class="token function">pattern</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">NumberStyleFormatter</span><span class="token punctuation">(</span>annotation<span class="token punctuation">.</span><span class="token function">pattern</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+		<span class="token comment">// else</span>
+		<span class="token keyword">return</span> <span class="token keyword">switch</span><span class="token punctuation">(</span>annotation<span class="token punctuation">.</span><span class="token function">style</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">case</span> <span class="token class-name">Style</span><span class="token punctuation">.</span>PERCENT <span class="token operator">-&gt;</span> <span class="token keyword">new</span> <span class="token class-name">PercentStyleFormatter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token keyword">case</span> <span class="token class-name">Style</span><span class="token punctuation">.</span>CURRENCY <span class="token operator">-&gt;</span> <span class="token keyword">new</span> <span class="token class-name">CurrencyStyleFormatter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token keyword">default</span> <span class="token operator">-&gt;</span> <span class="token keyword">new</span> <span class="token class-name">NumberStyleFormatter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>형식 지정을 트리거하려면 다음 예제와 같이 <code>@NumberFormat</code>을 사용하여 필드에 어노테이션을 달 수 있습니다.</p>
+<pre><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">MyModel</span> <span class="token punctuation">{</span>
+
+	<span class="token annotation punctuation">@NumberFormat</span><span class="token punctuation">(</span>style<span class="token operator">=</span><span class="token class-name">Style</span><span class="token punctuation">.</span>CURRENCY<span class="token punctuation">)</span>
+	<span class="token keyword">private</span> <span class="token class-name">BigDecimal</span> decimal<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h2 id="format-annotation-api">Format Annotation API</h2>
+<p>이식 가능한 형식 주석 API는 <code>org.springframework.format.annotation</code> 패키지에 있습니다. <code>@NumberFormat</code>을 사용하여 <code>Double</code> 및 <code>Long</code>과 같은 <code>Number</code> 필드의 형식을 지정하고 <code>@DateTimeFormat</code>을 사용하여 <code>java.util.Date</code>, <code>java.util.Calendar</code>, <code>Long</code>(밀리초 타임스탬프용) 및 JSR-310 <code>java.time</code>의 형식을 지정할 수 있습니다.</p>
+<p>다음 예에서는 <code>@DateTimeFormat</code>을 사용하여 <code>java.util.Date</code>를 ISO 날짜(yyyy-MM-dd)로 형식화합니다.</p>
+<pre><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">MyModel</span> <span class="token punctuation">{</span>
+
+	<span class="token annotation punctuation">@DateTimeFormat</span><span class="token punctuation">(</span>iso<span class="token operator">=</span>ISO<span class="token punctuation">.</span>DATE<span class="token punctuation">)</span>
+	<span class="token keyword">private</span> <span class="token class-name">Date</span> date<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h1 id="the-formatterregistry-spi">The <code>FormatterRegistry</code> SPI</h1>
+<p><code>FormatterRegistry</code>는 포맷터 및 변환기를 등록하기 위한 SPI입니다. <code>FormattingConversionService</code>는 대부분의 환경에 적합한 <code>FormatterRegistry</code>의 구현입니다. <code>FormattingConversionServiceFactoryBean</code>을 사용하여, 프로그래밍 방식으로 또는 선언적으로 이 변형을 Spring 빈으로 구성(configure)할 수 있습니다. 이 구현은 <code>ConversionService</code>도 구현하기 때문에 Spring의 <code>DataBinder</code> 및 Spring Expression Language(SpEL)와 함께 사용하도록 직접 구성할 수 있습니다.</p>
+<p>다음 목록은 <code>FormatterRegistry</code> SPI를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>format</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">FormatterRegistry</span> <span class="token keyword">extends</span> <span class="token class-name">ConverterRegistry</span> <span class="token punctuation">{</span>
+
+	<span class="token keyword">void</span> <span class="token function">addPrinter</span><span class="token punctuation">(</span><span class="token class-name">Printer</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> printer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">void</span> <span class="token function">addParser</span><span class="token punctuation">(</span><span class="token class-name">Parser</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> parser<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">void</span> <span class="token function">addFormatter</span><span class="token punctuation">(</span><span class="token class-name">Formatter</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> formatter<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">void</span> <span class="token function">addFormatterForFieldType</span><span class="token punctuation">(</span><span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">,</span> <span class="token class-name">Formatter</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> formatter<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">void</span> <span class="token function">addFormatterForFieldType</span><span class="token punctuation">(</span><span class="token class-name">Class</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> fieldType<span class="token punctuation">,</span> <span class="token class-name">Printer</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> printer<span class="token punctuation">,</span> <span class="token class-name">Parser</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">&gt;</span></span> parser<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">void</span> <span class="token function">addFormatterForFieldAnnotation</span><span class="token punctuation">(</span><span class="token class-name">AnnotationFormatterFactory</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span> <span class="token keyword">extends</span> <span class="token class-name">Annotation</span><span class="token punctuation">&gt;</span></span> annotationFormatterFactory<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>이전 목록에 표시된 것처럼 필드 유형 또는 어노테이션별로 포맷터를 등록할 수 있습니다.</p>
+<p><code>FormatterRegistry</code> SPI를 사용하면 컨트롤러 전체에 이러한 구성(configuration)을 복제하는 대신 중앙에서 형식 지정 규칙을 구성할 수 있습니다. 예를 들어 모든 날짜 필드가 특정 방식으로 형식화되거나 특정 어노테이션이 있는 필드가 특정 방식으로 형식화되도록 강제할 수 있습니다. 공유 <code>FormatterRegistry</code>를 사용하면 이러한 규칙을 한 번 정의하면 서식 지정이 필요할 때마다 적용됩니다.</p>
+<h1 id="the-formatterregistrar-spi">The <code>FormatterRegistrar</code> SPI</h1>
+<p><code>FormatterRegistrar</code>는 FormatterRegistry를 통해 포맷터 및 변환기를 등록하기 위한 SPI입니다. 다음 목록은 인터페이스 정의를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>format</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">FormatterRegistrar</span> <span class="token punctuation">{</span>
+
+	<span class="token keyword">void</span> <span class="token function">registerFormatters</span><span class="token punctuation">(</span><span class="token class-name">FormatterRegistry</span> registry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p><code>FormatterRegistrar</code>는 날짜 형식과 같은 지정된 형식 범주에 대해 여러 관련 변환기 및 포맷터를 등록할 때 유용합니다. 이는 선언적 등록이 불충분한 경우에도 유용할 수 있습니다. 예를 들어 포맷터가 자체 <code>&lt;T&gt;</code>와 다른 특정 필드 타입에서 색인화되어야 하거나 <code>Printer</code>/<code>Parser</code> 쌍을 등록할 때입니다. 다음 섹션에서는 변환기 및 포맷터 등록에 대한 자세한 정보를 제공합니다.</p>
+<h1 id="configuring-formatting-in-spring-mvc">Configuring Formatting In Spring MVC</h1>
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-config/conversion.html">Spring MVC 장의 변환 및 형식화</a>를 참조하세요.</p>
