@@ -1,0 +1,9 @@
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webflux/controller/ann-methods/typeconversion.html">반응형 스택에서 이에 상응하는 내용 보기</a></p>
+<p>문자열 기반 요청 입력(예: <code>@RequestParam</code>, <code>@RequestHeader</code>, <code>@PathVariable</code>, <code>@MatrixVariable</code> 및 <code>@CookieValue</code>)을 나타내는 일부 annotation이 달린 컨트롤러 메서드 인수가 <code>String</code>이 아닌 다른 것으로 선언된 경우 형식 변환이 필요할 수 있습니다.</p>
+<p>이러한 경우 구성된 변환기에 따라 유형 변환이 자동으로 적용됩니다. 기본적으로 단순 type(<code>int</code>, <code>long</code>, <code>Date</code> 등)이 지원됩니다. <code>WebDataBinder</code>(<a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-initbinder.html"><code>DataBinder</code></a> 참조)를 통해 또는 <code>FormattingConversionService</code>에 포맷터를 등록하여 유형 변환을 사용자 정의할 수 있습니다. <a href="https://docs.spring.io/spring-framework/reference/core/validation/format.html">스프링 필드 형식</a>을 참조하세요.</p>
+<p>유형 변환의 실제 문제는 빈 문자열 소스 값을 처리하는 것입니다. 이러한 값은 유형 변환의 결과로 <code>null</code>이 되는 경우 누락된 것으로 처리됩니다. 이는 <code>Long</code>, <code>UUID</code> 및 기타 대상 유형의 경우일 수 있습니다. <code>null</code> 삽입을 허용하려면 인수 annotation에 <code>required</code> 플래그를 사용하거나 인수를 <code>@Nullable</code>로 선언하세요.</p>
+<blockquote>
+<p><strong>[Note]</strong><br>
+5.3부터 유형 변환 후에도 null이 아닌 인수가 적용됩니다. 처리기 메서드가 null 값도 허용하려는 경우 인수를 <code>@Nullable</code>로 선언하거나 해당 <code>@RequestParam</code> 등 annotation에서 이를 <code>require=false</code>로 표시합니다. 이는 5.3 업그레이드에서 발생하는 회귀에 대한 모범 사례이자 권장되는 솔루션입니다.</p>
+<p>또는 구체적으로 처리할 수도 있습니다. 필수 <code>@PathVariable</code>의 경우 결과 <code>MissingPathVariableException</code>. 변환 후 null 값은 빈 원래 값처럼 처리되므로 해당 <code>Missing…​Exception</code> 변형이 발생합니다.</p>
+</blockquote>
