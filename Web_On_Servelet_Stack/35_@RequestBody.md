@@ -1,0 +1,13 @@
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webflux/controller/ann-methods/requestbody.html">반응형 스택에서 이에 상응하는 내용 보기</a> </p>
+<p><code>@RequestBody</code> annotation을 사용하면 요청 본문을 읽고 <code>HttpMessageConverter</code>를 통해 <code>Object</code>로 역직렬화할 수 있습니다. 다음 예에서는 <code>@RequestBody</code> 인수를 사용합니다.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@PostMapping</span><span class="token punctuation">(</span><span class="token string">"/accounts"</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token annotation punctuation">@RequestBody</span> <span class="token class-name">Account</span> account<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-config.html">MVC Config</a>의 <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-config/message-converters.html">메시지 Converters</a> 옵션을 사용하여 메시지 변환을 구성하거나 사용자 정의할 수 있습니다.</p>
+<p><code>jakarta.validation.Valid</code> 또는 Spring의 <code>@Validated</code> annotation과 함께 <code>@RequestBody</code>를 사용할 수 있으며 두 가지 모두 표준 Bean 유효성 검사가 적용됩니다. 기본적으로 유효성 검사 오류로 인해 <code>MethodArgumentNotValidException</code>이 발생하고 이는 400(BAD_REQUEST) 응답으로 전환됩니다. 또는 다음 예제와 같이 <code>Errors</code> 또는 <code>BindingResult</code> 인수를 통해 컨트롤러 내에서 로컬로 유효성 검사 오류를 처리할 수 있습니다.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@PostMapping</span><span class="token punctuation">(</span><span class="token string">"/accounts"</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Valid</span> <span class="token annotation punctuation">@RequestBody</span> <span class="token class-name">Account</span> account<span class="token punctuation">,</span> <span class="token class-name">Errors</span> errors<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+<p>다른 매개변수에 <code>@Constraint</code> annotation이 있어서 메서드 유효성 검사가 적용되는 경우 대신 <code>HandlerMethodValidationException</code>이 발생합니다. 자세한 내용은 <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html">유효성</a> 검사 섹션을 참조하세요.</p>
