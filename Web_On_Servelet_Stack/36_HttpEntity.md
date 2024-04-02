@@ -1,0 +1,6 @@
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webflux/controller/ann-methods/httpentity.html">반응형 스택에서 이에 상응하는 내용 보기</a></p>
+<p><code>HttpEntity</code>는 <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/requestbody.html"><code>@RequestBody</code></a>를 사용하는 것과 거의 동일하지만 요청 헤더와 본문을 노출하는 컨테이너 개체를 기반으로 합니다. 다음 목록은 예를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@PostMapping</span><span class="token punctuation">(</span><span class="token string">"/accounts"</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token class-name">HttpEntity</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">Account</span><span class="token punctuation">&gt;</span></span> entity<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
