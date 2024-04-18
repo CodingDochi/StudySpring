@@ -1,0 +1,3 @@
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webflux-view.html#webflux-view-thymeleaf">반응형 스택에서 이에 상응하는 내용 보기</a></p>
+<p>Thymeleaf는 두 번 클릭하여 브라우저에서 미리 볼 수 있는 자연스러운 HTML 템플릿을 강조하는 현대적인 서버 측 Java 템플릿 엔진입니다. 이는 별도의 작업 없이 UI 템플릿에 대한 독립적인 작업(예: 디자이너가 수행)에 매우 유용합니다. 운영중인 서버. JSP를 대체하려는 경우 Thymeleaf는 이러한 전환을 더 쉽게 만들어주는 가장 광범위한 기능 세트 중 하나를 제공합니다. Thymeleaf는 적극적으로 개발 및 유지 관리됩니다. 보다 완전한 소개를 보려면 <a href="https://www.thymeleaf.org/">Thymeleaf</a> 프로젝트 홈페이지를 참조하세요.</p>
+<p>Spring MVC와의 Thymeleaf 통합은 Thymeleaf 프로젝트에 의해 관리됩니다. 구성에는 <code>ServletContextTemplateResolver</code>, <code>SpringTemplateEngine</code> 및 <code>ThymeleafViewResolver</code>와 같은 몇 가지 Bean 선언이 포함됩니다. 자세한 내용은 <a href="https://www.thymeleaf.org/documentation.html">Thymeleaf+Spring</a>을 참조하세요.</p>
