@@ -1,0 +1,28 @@
+<p>Java 구성에서는 다음 예제와 같이 들어오는 요청에 적용할 인터셉터를 등록할 수 있습니다.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Configuration</span>
+<span class="token annotation punctuation">@EnableWebMvc</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">WebConfig</span> <span class="token keyword">implements</span> <span class="token class-name">WebMvcConfigurer</span> <span class="token punctuation">{</span>
+
+	<span class="token annotation punctuation">@Override</span>
+	<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">addInterceptors</span><span class="token punctuation">(</span><span class="token class-name">InterceptorRegistry</span> registry<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		registry<span class="token punctuation">.</span><span class="token function">addInterceptor</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">LocaleChangeInterceptor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		registry<span class="token punctuation">.</span><span class="token function">addInterceptor</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ThemeChangeInterceptor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">addPathPatterns</span><span class="token punctuation">(</span><span class="token string">"/**"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">excludePathPatterns</span><span class="token punctuation">(</span><span class="token string">"/admin/**"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>다음 예에서는 XML에서 동일한 구성을 달성하는 방법을 보여줍니다.</p>
+<pre><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mvc:</span>interceptors</span><span class="token punctuation">&gt;</span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>bean</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>org.springframework.web.servlet.i18n.LocaleChangeInterceptor<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mvc:</span>interceptor</span><span class="token punctuation">&gt;</span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mvc:</span>mapping</span> <span class="token attr-name">path</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>/**<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mvc:</span>exclude-mapping</span> <span class="token attr-name">path</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>/admin/**<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>bean</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>org.springframework.web.servlet.theme.ThemeChangeInterceptor<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span><span class="token namespace">mvc:</span>interceptor</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span><span class="token namespace">mvc:</span>interceptors</span><span class="token punctuation">&gt;</span></span></code></pre>
+<blockquote>
+<p><strong>[Note]</strong><br>
+인터셉터는 annotation이 달린 컨트롤러 경로 일치와의 불일치 가능성으로 인해 보안 계층으로 이상적으로 적합하지 않습니다. 이는 다른 path matching 옵션과 함께 후행 슬래시 및 경로 확장을 투명하게 일치시킬 수도 있습니다. 이러한 옵션 중 다수는 더 이상 사용되지 않지만 불일치 가능성은 여전히 남아 있습니다. 일반적으로 Spring MVC 경로 일치에 맞춰 전용 <a href="https://docs.spring.io/spring-security/reference/servlet/integrations/mvc.html#mvc-requestmatcher">MvcRequestMatcher</a>를 포함하고 URL 경로에서 원하지 않는 많은 문자를 차단하는 보안 방화벽이 포함된 Spring Security를 사용하는 것이 좋습니다.</p>
+</blockquote>
+<blockquote>
+<p><strong>[Note]</strong><br>
+XML 구성은 인터셉터를 <code>MappedInterceptor</code> 빈으로 선언하고 이는 다른 프레임워크의 빈을 포함하여 모든 <code>HandlerMapping</code> 빈에 의해 감지됩니다. 대조적으로, Java 구성은 관리하는 <code>HandlerMapping</code> Bean에만 인터셉터를 전달합니다. MVC Java 구성과 함께 Spring MVC 및 기타 프레임워크 <code>HandlerMapping</code> Bean에서 동일한 인터셉터를 재사용하려면 <code>MappedInterceptor</code> Bean을 선언하거나(Java 구성에 수동으로 추가하지 않음) Java 구성과 다른 <code>HandlerMapping</code> 빈 모두에서 동일한 인터셉터를 구성하십시오.</p>
+</blockquote>
