@@ -1,0 +1,14 @@
+<p>호출 시 즉시 뷰로 전달되는 <code>ParameterizedViewController</code>를 정의하는 바로가기입니다. 보기가 응답을 생성하기 전에 실행할 Java 컨트롤러 logic이 없는 static case에 이를 사용할 수 있습니다.</p>
+<p>다음 Java 구성 예는 <code>/</code>에 대한 요청을 <code>home</code>이라는 뷰로 전달합니다.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Configuration</span>
+<span class="token annotation punctuation">@EnableWebMvc</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">WebConfig</span> <span class="token keyword">implements</span> <span class="token class-name">WebMvcConfigurer</span> <span class="token punctuation">{</span>
+
+	<span class="token annotation punctuation">@Override</span>
+	<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">addViewControllers</span><span class="token punctuation">(</span><span class="token class-name">ViewControllerRegistry</span> registry<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		registry<span class="token punctuation">.</span><span class="token function">addViewController</span><span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">setViewName</span><span class="token punctuation">(</span><span class="token string">"home"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>다음 예제에서는 이전 예제와 동일한 작업을 수행하지만 <code>&lt;mvc:view-controller&gt;</code> 요소를 사용하여 XML을 사용합니다.</p>
+<pre><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mvc:</span>view-controller</span> <span class="token attr-name">path</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>/<span class="token punctuation">"</span></span> <span class="token attr-name">view-name</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>home<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span></code></pre>
+<p><code>@RequestMapping</code> 메소드가 HTTP 메소드의 URL에 매핑되면 뷰 컨트롤러를 사용하여 동일한 URL을 처리할 수 없습니다. 이는 annotation이 달린 컨트롤러에 대한 URL 일치가 엔드포인트 소유권을 충분히 강력하게 나타내는 것으로 간주되어 디버깅에 도움이 되도록 405(METHOD_NOT_ALLOWED), 415(UNSUPPORTED_MEDIA_TYPE) 또는 유사한 응답을 클라이언트에 보낼 수 있기 때문입니다. 이러한 이유로 annotation 달린 컨트롤러와 뷰 컨트롤러에서 URL 처리를 분할하지 않는 것이 좋습니다.</p>
