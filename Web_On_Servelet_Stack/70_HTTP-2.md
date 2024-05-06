@@ -1,0 +1,3 @@
+<p><a href="https://docs.spring.io/spring-framework/reference/web/webflux/http2.html">반응형 스택에서 이에 상응하는 내용 보기</a></p>
+<p>HTTP/2를 지원하려면 Servlet 4 컨테이너가 필요하며 Spring Framework 5는 Servlet API 4와 호환됩니다. 프로그래밍 모델 관점에서 애플리케이션이 수행해야 하는 특정 작업은 없습니다. 그러나 서버 구성과 관련된 고려 사항이 있습니다. 자세한 내용은 <a href="https://github.com/spring-projects/spring-framework/wiki/HTTP-2-support">HTTP/2 위키 페이지</a>를 참조하세요.</p>
+<p>Servlet API는 HTTP/2와 관련된 하나의 구성을 노출합니다. <code>jakarta.servlet.http.PushBuilder</code>를 사용하여 자원을 클라이언트에 사전에 푸시할 수 있으며 이는 <code>@RequestMapping</code> 메소드에 대한 <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/arguments.html">메소드 인수</a>로 지원됩니다.</p>
