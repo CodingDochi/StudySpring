@@ -1,0 +1,38 @@
+<p>JPA 2.1 사양에는 JPA 기준 쿼리 API를 사용하여 저장 프로시저 호출에 대한 지원이 도입되었습니다. 리포지토리 메서드에서 저장 프로시저 메타데이터를 선언하기 위한 <code>@Procedure</code> annotation을 도입했습니다.</p>
+<p>다음 예제에서는 다음 저장 프로시저를 사용합니다.</p>
+<p>Example 1. The definition of the plus1inout procedure in HSQL DB.</p>
+<pre><code class="language-sql"><span class="token operator">/</span><span class="token punctuation">;</span>
+<span class="token keyword">DROP</span> <span class="token keyword">procedure</span> <span class="token keyword">IF</span> <span class="token keyword">EXISTS</span> plus1inout
+<span class="token operator">/</span><span class="token punctuation">;</span>
+<span class="token keyword">CREATE</span> <span class="token keyword">procedure</span> plus1inout <span class="token punctuation">(</span><span class="token operator">IN</span> arg <span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">OUT</span> res <span class="token keyword">int</span><span class="token punctuation">)</span>
+<span class="token keyword">BEGIN</span> ATOMIC
+ <span class="token keyword">set</span> res <span class="token operator">=</span> arg <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token keyword">END</span>
+<span class="token operator">/</span><span class="token punctuation">;</span></code></pre>
+<p>저장 프로시저의 메타데이터는 엔터티 유형에 대한 <code>NamedStoredProcedureQuery</code> annotation을 사용하여 구성할 수 있습니다.</p>
+<p>Example 2. StoredProcedure metadata definitions on an entity.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Entity</span>
+<span class="token annotation punctuation">@NamedStoredProcedureQuery</span><span class="token punctuation">(</span>name <span class="token operator">=</span> <span class="token string">"User.plus1"</span><span class="token punctuation">,</span> procedureName <span class="token operator">=</span> <span class="token string">"plus1inout"</span><span class="token punctuation">,</span> parameters <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@StoredProcedureParameter</span><span class="token punctuation">(</span>mode <span class="token operator">=</span> <span class="token class-name">ParameterMode</span><span class="token punctuation">.</span>IN<span class="token punctuation">,</span> name <span class="token operator">=</span> <span class="token string">"arg"</span><span class="token punctuation">,</span> type <span class="token operator">=</span> <span class="token class-name">Integer</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token annotation punctuation">@StoredProcedureParameter</span><span class="token punctuation">(</span>mode <span class="token operator">=</span> <span class="token class-name">ParameterMode</span><span class="token punctuation">.</span>OUT<span class="token punctuation">,</span> name <span class="token operator">=</span> <span class="token string">"res"</span><span class="token punctuation">,</span> type <span class="token operator">=</span> <span class="token class-name">Integer</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">User</span> <span class="token punctuation">{</span><span class="token punctuation">}</span></code></pre>
+<p><code>@NamedStoredProcedureQuery</code>에는 저장 프로시저에 대한 두 가지 다른 이름이 있습니다. <code>name</code>은 JPA가 사용하는 이름입니다. <code>procedureName</code>은 데이터베이스에 있는 저장 프로시저의 이름입니다.</p>
+<p>다양한 방법으로 리포지토리 메서드에서 저장 프로시저를 참조할 수 있습니다. 호출할 저장 프로시저는 <code>@Procedure</code> annotation의 <code>value</code> 또는 <code>procedureName</code> 속성을 사용하여 직접 정의할 수 있습니다. 이는 데이터베이스의 저장 프로시저를 직접 참조하고 <code>@NamedStoredProcedureQuery</code>를 통한 모든 구성을 무시합니다.</p>
+<p>또는 <code>@NamedStoredProcedureQuery.name</code> 속성을 <code>@Procedure.name</code> 속성으로 지정할 수도 있습니다. <code>value</code>, <code>procedureName</code>, <code>name</code>이 모두 구성되지 않은 경우 리포지토리 메서드의 이름이 <code>name</code> 속성으로 사용됩니다.</p>
+<p>다음 예에서는 명시적으로 매핑된 프로시저를 참조하는 방법을 보여줍니다.</p>
+<p>Example 3. Referencing explicitly mapped procedure with name "plus1inout" in database.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Procedure</span><span class="token punctuation">(</span><span class="token string">"plus1inout"</span><span class="token punctuation">)</span>
+<span class="token class-name">Integer</span> <span class="token function">explicitlyNamedPlus1inout</span><span class="token punctuation">(</span><span class="token class-name">Integer</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>다음 예제는 이전 예제와 동일하지만 <code>procedureName</code> 별칭을 사용합니다.<br>
+Example 4. Referencing implicitly mapped procedure with name "plus1inout" in database via procedureName alias.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Procedure</span><span class="token punctuation">(</span>procedureName <span class="token operator">=</span> <span class="token string">"plus1inout"</span><span class="token punctuation">)</span>
+<span class="token class-name">Integer</span> <span class="token function">callPlus1InOut</span><span class="token punctuation">(</span><span class="token class-name">Integer</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>다음은 이전 두 개와 동일하지만 명시적인 annotation 속성 대신 메서드 이름을 사용합니다.<br>
+Example 5. Referencing implicitly mapped named stored procedure "User.plus1" in EntityManager by using the method name.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Procedure</span>
+<span class="token class-name">Integer</span> <span class="token function">plus1inout</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Param</span><span class="token punctuation">(</span><span class="token string">"arg"</span><span class="token punctuation">)</span> <span class="token class-name">Integer</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>다음 예에서는 <code>@NamedStoredProcedureQuery.name</code> 특성을 참조하여 저장 프로시저를 참조하는 방법을 보여줍니다.<br>
+Example 6. Referencing explicitly mapped named stored procedure "User.plus1IO" in EntityManager.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Procedure</span><span class="token punctuation">(</span>name <span class="token operator">=</span> <span class="token string">"User.plus1IO"</span><span class="token punctuation">)</span>
+<span class="token class-name">Integer</span> <span class="token function">entityAnnotatedCustomNamedProcedurePlus1IO</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Param</span><span class="token punctuation">(</span><span class="token string">"arg"</span><span class="token punctuation">)</span> <span class="token class-name">Integer</span> arg<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>호출되는 저장 프로시저에 단일 출력 매개변수가 있는 경우 해당 매개변수가 메소드의 반환 값으로 반환될 수 있습니다. <code>@NamedStoredProcedureQuery</code> annotation에 지정된 여러 출력 매개변수가 있는 경우 해당 매개변수는 <code>@NamedStoredProcedureQuery</code> annotation에 지정된 매개변수 이름이 되는 키를 사용하여 <code>Map</code>으로 반환될 수 있습니다.</p>
