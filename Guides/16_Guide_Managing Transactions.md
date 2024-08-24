@@ -1,0 +1,127 @@
+<p>이 가이드는 비침해적인 트랜잭션으로 데이터베이스 작업을 래핑하는 프로세스를 안내합니다.</p>
+<h2 id="whay-you-will-build">Whay You Will Build</h2>
+<p>특별한 JDBC 코드를 작성할 필요 없이 트랜잭션 데이터베이스 작업을 수행하는 간단한 JDBC 애플리케이션을 구축합니다.</p>
+<h2 id="starting-with-spring-initializr">Starting with Spring Initializr</h2>
+<p><img src="https://velog.velcdn.com/images/dev_hammy/post/d7097c34-3a18-44a6-aed7-2f7a62e97c96/image.png"></p>
+<h2 id="create-a-booking-service">Create a Booking Service</h2>
+<p>먼저, <code>BookingService</code> 클래스를 사용하여 이름으로 시스템에 사람들을 예약하는 JDBC 기반 서비스를 만들어야 합니다. 다음 목록(src/main/java/guides/managingtransactions/BookingService.java)에서는 이를 수행하는 방법을 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">guides<span class="token punctuation">.</span>managingtransactions</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>slf4j</span><span class="token punctuation">.</span><span class="token class-name">Logger</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>slf4j</span><span class="token punctuation">.</span><span class="token class-name">LoggerFactory</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>jdbc<span class="token punctuation">.</span>core</span><span class="token punctuation">.</span><span class="token class-name">JdbcTemplate</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>stereotype</span><span class="token punctuation">.</span><span class="token class-name">Component</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>transaction<span class="token punctuation">.</span>annotation</span><span class="token punctuation">.</span><span class="token class-name">Transactional</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token namespace">java<span class="token punctuation">.</span>util</span><span class="token punctuation">.</span><span class="token class-name">List</span><span class="token punctuation">;</span>
+
+<span class="token annotation punctuation">@Component</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BookingService</span> <span class="token punctuation">{</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">static</span> <span class="token class-name">Logger</span> logger <span class="token operator">=</span> <span class="token class-name">LoggerFactory</span><span class="token punctuation">.</span><span class="token function">getLogger</span><span class="token punctuation">(</span><span class="token class-name">BookingService</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">JdbcTemplate</span> jdbcTemplate<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token class-name">BookingService</span><span class="token punctuation">(</span><span class="token class-name">JdbcTemplate</span> jdbcTemplate<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>jdbcTemplate <span class="token operator">=</span> jdbcTemplate<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Transactional</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">book</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> persons<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token class-name">String</span> person <span class="token operator">:</span> persons<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"Booking "</span> <span class="token operator">+</span> person <span class="token operator">+</span> <span class="token string">"in a seat..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            jdbcTemplate<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span><span class="token string">"insert into BOOKINGS(FIRST_NAME) values (?)"</span><span class="token punctuation">,</span> person<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">String</span><span class="token punctuation">&gt;</span></span> <span class="token function">findAllBookings</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> jdbcTemplate<span class="token punctuation">.</span><span class="token function">query</span><span class="token punctuation">(</span><span class="token string">"select FIRST_NAME from BOOKINGS"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>rs<span class="token punctuation">,</span> rowNum<span class="token punctuation">)</span> <span class="token operator">-&gt;</span> rs<span class="token punctuation">.</span><span class="token function">getString</span><span class="token punctuation">(</span><span class="token string">"FIRST_NAME"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+<span class="token punctuation">}</span></code></pre>
+<p>코드에는 나머지 코드에 필요한 모든 데이터베이스 상호 작용을 수행하는 편리한 템플릿 클래스인 자동 연결 <code>JdbcTemplate</code>이 있습니다.</p>
+<p>여러 사람을 예약할 수 있는 <code>book</code> method도 있습니다. 사람 목록을 반복하고 각 사람에 대해 <code>JdbcTemplate</code>을 사용하여 해당 사람을 <code>BOOKINGS</code> 테이블에 삽입합니다. 이 메서드에는 <code>@Transactional</code> 태그가 지정되어 있습니다. 이는 오류가 발생하면 전체 작업이 이전 상태로 롤백되고 원래 예외가 다시 발생함(re-throw)을 의미합니다. 즉, 한 사람이 추가되지 않으면 어떤 사람도 <code>BOOKINGS</code>에 추가되지 않습니다.</p>
+<p>데이터베이스를 쿼리하는 <code>findAllBookings</code> 메서드도 있습니다. 데이터베이스에서 가져온(fetched) 각 행은 <code>String</code>로 변환되고 모든 행은 <code>List</code>으로 결합됩니다.</p>
+<h2 id="애플리케이션-구축">애플리케이션 구축</h2>
+<p>Spring 초기화는 애플리케이션 클래스를 제공합니다. 이 경우 이 애플리케이션 클래스를 수정할 필요가 없습니다. 다음 목록(src/main/java/guides/managingtransactions/ManagingTransactionsApplication.java에서)은 애플리케이션 클래스를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">guides<span class="token punctuation">.</span>managingtransactions</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>boot</span><span class="token punctuation">.</span><span class="token class-name">SpringApplication</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>boot<span class="token punctuation">.</span>autoconfigure</span><span class="token punctuation">.</span><span class="token class-name">SpringBootApplication</span><span class="token punctuation">;</span>
+
+<span class="token annotation punctuation">@SpringBootApplication</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">ManagingTransactionsApplication</span> <span class="token punctuation">{</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token class-name">SpringApplication</span><span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token class-name">ManagingTransactionsApplication</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> args<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span></code></pre>
+<p>귀하의 애플리케이션에는 실제로 구성이 없습니다. Spring Boot는 classpath에서 <code>spring-jdbc</code>와 <code>h2</code>를 감지하고 자동으로 <code>DataSource</code>와 <code>JdbcTemplate</code>을 생성합니다. 이제 이 인프라를 사용할 수 있고 전용 구성이 없기 때문에 <code>DataSourceTransactionManager</code>도 생성됩니다. 이는 <code>@Transactional</code>로 주석이 달린 메서드(예: <code>BookingService</code>의 <code>book</code> 메서드)를 가로채는 구성 요소입니다. <code>BookingService</code>는 클래스 경로 검색을 통해 감지됩니다.</p>
+<p>이 가이드에서 설명하는 또 다른 Spring Boot 기능은 시작 시 스키마를 초기화하는 기능입니다. 다음 파일(src/main/resources/schema.sql)은 데이터베이스 스키마를 정의합니다.</p>
+<pre><code class="language-sql"><span class="token keyword">drop</span> <span class="token keyword">table</span> BOOKINGS <span class="token keyword">if</span> <span class="token keyword">exists</span><span class="token punctuation">;</span>
+<span class="token keyword">create</span> <span class="token keyword">table</span> BOOKINGS<span class="token punctuation">(</span>ID <span class="token keyword">serial</span><span class="token punctuation">,</span> FIRST_NAME <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><code>BookingService</code>를 주입하고 다양한 트랜잭션 사용 사례를 보여주는 <code>CommandLineRunner</code>도 있습니다. 다음 목록(src/main/java/guides/managingtransactions/AppRunner.java)은 명령줄 실행기를 보여줍니다.</p>
+<pre><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">guides<span class="token punctuation">.</span>managingtransactions</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>slf4j</span><span class="token punctuation">.</span><span class="token class-name">Logger</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>slf4j</span><span class="token punctuation">.</span><span class="token class-name">LoggerFactory</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>boot</span><span class="token punctuation">.</span><span class="token class-name">CommandLineRunner</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>stereotype</span><span class="token punctuation">.</span><span class="token class-name">Component</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>util</span><span class="token punctuation">.</span><span class="token class-name">Assert</span><span class="token punctuation">;</span>
+
+<span class="token annotation punctuation">@Component</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">AppRunner</span> <span class="token keyword">implements</span> <span class="token class-name">CommandLineRunner</span> <span class="token punctuation">{</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">static</span> <span class="token class-name">Logger</span> logger <span class="token operator">=</span> <span class="token class-name">LoggerFactory</span><span class="token punctuation">.</span><span class="token function">getLogger</span><span class="token punctuation">(</span><span class="token class-name">AppRunner</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token class-name">BookingService</span> bookingService<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token class-name">AppRunner</span><span class="token punctuation">(</span><span class="token class-name">BookingService</span> bookingService<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>bookingService <span class="token operator">=</span> bookingService<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">Exception</span> <span class="token punctuation">{</span>
+        bookingService<span class="token punctuation">.</span><span class="token function">book</span><span class="token punctuation">(</span><span class="token string">"Alice"</span><span class="token punctuation">,</span> <span class="token string">"Bob"</span><span class="token punctuation">,</span> <span class="token string">"Carol"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Assert</span><span class="token punctuation">.</span><span class="token function">isTrue</span><span class="token punctuation">(</span>bookingService<span class="token punctuation">.</span><span class="token function">findAllBookings</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token string">"First booking should work with no problem"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"Alice, Bob and Carol have been booked"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            bookingService<span class="token punctuation">.</span><span class="token function">book</span><span class="token punctuation">(</span><span class="token string">"Chris"</span><span class="token punctuation">,</span> <span class="token string">"Samuel"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">RuntimeException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"v--- The following exception is expect because 'Samuel' is too "</span><span class="token operator">+</span><span class="token string">"big for the DB ---v"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            logger<span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token class-name">String</span> person <span class="token operator">:</span> bookingService<span class="token punctuation">.</span><span class="token function">findAllBookings</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"So far, "</span><span class="token operator">+</span> person <span class="token operator">+</span><span class="token string">"is booked."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"You shouldn't see Chris or Samuel. Samuel violated DB constraints. "</span> <span class="token operator">+</span> <span class="token string">"and Chris was rolled back in the same TX"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Assert</span><span class="token punctuation">.</span><span class="token function">isTrue</span><span class="token punctuation">(</span>bookingService<span class="token punctuation">.</span><span class="token function">findAllBookings</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">==</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token string">"'Samuel' should have triggered a rollback"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            bookingService<span class="token punctuation">.</span><span class="token function">book</span><span class="token punctuation">(</span><span class="token string">"Buddy"</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">RuntimeException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"v--- The following exception is except because null is not "</span><span class="token operator">+</span><span class="token string">"valid for the DB ---v"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            logger<span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token class-name">String</span> person <span class="token operator">:</span> bookingService<span class="token punctuation">.</span><span class="token function">findAllBookings</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"So far, "</span> <span class="token operator">+</span> person <span class="token operator">+</span> <span class="token string">"is booked"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        logger<span class="token punctuation">.</span><span class="token function">info</span><span class="token punctuation">(</span><span class="token string">"You shouldn't see Buddy or null. null violated DB constraints, and "</span> <span class="token operator">+</span> <span class="token string">"Buddy was rolled back in the same TX"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Assert</span><span class="token punctuation">.</span><span class="token function">isTrue</span><span class="token punctuation">(</span>bookingService<span class="token punctuation">.</span><span class="token function">findAllBookings</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token string">"'null' should have triggered a rollback"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span></code></pre>
+<p><img src="https://velog.velcdn.com/images/dev_hammy/post/a3446fa4-1d16-48c2-9540-e5deb3dabcc3/image.png"></p>
+<p><code>BOOKINGS</code> 테이블에는 <code>first_name</code> 열에 대한 두 가지 제약 조건이 있습니다.</p>
+<ul>
+<li>이름은 5자를 초과할 수 없습니다.</li>
+<li>이름은 null일 수 없습니다.</li>
+</ul>
+<p>삽입된 처음 세 이름은 <code>Alice</code>, <code>Bob</code> 및 <code>Carol</code>입니다. 애플리케이션에서는 해당 테이블에 세 사람이 추가되었다고 주장(<code>Assert.isTrue(...)</code>)합니다. 이것이 작동하지 않았다면 애플리케이션이 일찍 종료되었을 것입니다.</p>
+<p>다음으로 <code>Chris</code>와 <code>Samuel</code>에 대한 또 다른 예약이 이루어집니다. Samuel의 이름은 의도적으로 너무 길어서 삽입 오류가 발생했습니다. 트랜잭션 동작은 <code>Chris</code>와 <code>Samuel</code>(즉, 이 트랜잭션의 모든 값)이 모두 롤백되어야 함을 규정합니다. 따라서 해당 테이블에는 여전히 3명의 사람만 있어야 하며, 이는 주장(assertion)이 보여줍니다.</p>
+<p>마지막으로 <code>Buddy</code>와 <code>null</code>이 예약되었습니다. 출력에 표시된 대로 <code>null</code>로 인해 롤백도 발생하여 동일한 3명이 예약됩니다.</p>

@@ -1,0 +1,11 @@
+<p><code>LoadTimeWeaver</code>는 클래스가 JVM(Java Virtual Machine)에 로드될 때 클래스를 동적으로 변환(transform)하기 위해 Spring에서 사용됩니다.</p>
+<p>load-time 위빙을 활성화하려면 다음 예제와 같이 <code>@Configuration</code> 클래스 중 하나에 <code>@EnableLoadTimeWeaving</code>을 추가하면 됩니다.</p>
+<pre><code class="language-java"><span class="token annotation punctuation">@Configuration</span>
+<span class="token annotation punctuation">@EnableLoadTimeWeaving</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">AppConfig</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre>
+<p>또는 XML 구성의 경우 <code>context:load-time-weaver</code> 요소를 사용할 수 있습니다.</p>
+<pre><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>beans</span><span class="token punctuation">&gt;</span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">context:</span>load-time-weaver</span><span class="token punctuation">/&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>beans</span><span class="token punctuation">&gt;</span></span></code></pre>
+<p><code>ApplicationContext</code>에 대해 구성(configured)되면 해당 <code>ApplicationContext</code> 내의 모든 Bean은 <code>LoadTimeWeaverAware</code>를 구현할 수 있으며 이를 통해 load-time 위버 인스턴스에 대한 참조(reference)를 수신할 수 있습니다. 이는 JPA 클래스 변환을 위해 load-time 위빙이 필요할 수 있는 <a href="https://docs.spring.io/spring-framework/reference/data-access/orm/jpa.html">Spring의 JPA 지원</a>과 결합하여 특히 유용합니다. 자세한 내용은 <a href="https://docs.spring.io/spring-framework/docs/6.1.5/javadoc-api/org/springframework/orm/jpa/LocalContainerEntityManagerFactoryBean.html"><code>LocalContainerEntityManagerFactoryBean</code></a> javadoc를 참조하세요. AspectJ load-time 위빙에 대한 자세한 내용은 <a href="https://docs.spring.io/spring-framework/reference/core/aop/using-aspectj.html#aop-aj-ltw">Spring Framework에서 AspectJ를 사용한 load-time 위빙</a>을 참조하세요.</p>
